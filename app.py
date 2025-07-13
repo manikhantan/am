@@ -21,6 +21,8 @@ if 'execution_status' not in st.session_state:
     st.session_state.execution_status = {}
 if 'uploaded_data' not in st.session_state:
     st.session_state.uploaded_data = None
+if 'max_retries' not in st.session_state:
+    st.session_state.max_retries = 3
 
 st.set_page_config(
     page_title="AI Data Analysis Platform",
@@ -48,7 +50,7 @@ def main():
             model_name = st.selectbox(
                 "Select OpenAI Model:",
                 ["gpt-4.1", "gpt-4o", "o4-mini"],
-                help="gpt-4.1 is the newest OpenAI model"
+                help="gpt-4o is the newest OpenAI model"
             )
         else:
             model_name = st.selectbox(
@@ -266,7 +268,7 @@ def execute_analysis_plan(llm_service):
 
                 for step in group:
                     future = executor.submit(execute_single_step, step, llm_service, code_executor,
-                                             st.session_state.uploaded_data)
+                                             st.session_state.uploaded_data, st.session_state.max_retries)
                     futures[future] = step
 
                 # Process completed steps
@@ -316,7 +318,8 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
             if attempt == 0:
                 generated_code = llm_service.generate_analysis_code(step, data)
             else:
-                # Retry with error feedback
+                # Retry with error feedback - show retry message
+                st.warning(f"🔄 Retry {attempt}/{max_retries - 1} - Regenerating code after error...")
                 generated_code = llm_service.regenerate_code_with_error(
                     step, data, generated_code, last_error
                 )
@@ -324,9 +327,9 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
             # Step 2: Code executor safely runs the AI-generated code
             result = code_executor.execute_code(generated_code, data)
 
-            # If execution succeeded (no error), proceed with analysis
+            # Check if execution succeeded (no error in result)
             if not result.get('error'):
-                # Step 3: Have LLM analyze the execution results for insights
+                # Success! Step 3: Have LLM analyze the execution results for insights
                 try:
                     analysis = llm_service.analyze_step_results(step, result, data)
                     result['ai_analysis'] = analysis
@@ -341,21 +344,29 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
                     'attempts': attempt + 1
                 }
 
+                if attempt > 0:
+                    st.success(f"✅ Success after {attempt + 1} attempts!")
+
                 return result
             else:
-                # Store error for next retry
+                # Code execution failed - store error for next retry
                 last_error = result
                 if attempt < max_retries - 1:
-                    st.warning(
-                        f"🔄 Attempt {attempt + 1} failed, retrying... Error: {result.get('error', 'Unknown error')}")
+                    st.warning(f"⚠️ Attempt {attempt + 1} failed: {result.get('error', 'Unknown error')}")
+                else:
+                    st.error(f"❌ All {max_retries} attempts failed")
 
         except Exception as e:
+            # Exception during code generation or other unexpected error
             last_error = {
                 'error': f"Code generation/execution failed: {str(e)}",
-                'summary': f"Failed on attempt {attempt + 1}: {str(e)}"
+                'summary': f"Failed on attempt {attempt + 1}: {str(e)}",
+                'traceback': str(e)
             }
             if attempt < max_retries - 1:
-                st.warning(f"🔄 Attempt {attempt + 1} failed, retrying... Error: {str(e)}")
+                st.warning(f"⚠️ Attempt {attempt + 1} failed: {str(e)}")
+            else:
+                st.error(f"❌ All {max_retries} attempts failed")
 
     # If we get here, all attempts failed
     if last_error:
