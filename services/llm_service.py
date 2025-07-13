@@ -73,14 +73,14 @@ Generate a comprehensive analysis plan that addresses the user's requirements wh
                         {"role": "user", "content": user_message}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0
+                    temperature=0.1
                 )
                 return json.loads(response.choices[0].message.content)
             
             elif self.provider == "anthropic":
                 response = self.client.messages.create(
                     model=self.model_name,
-                    temperature=0,
+                    temperature=0.1,
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
@@ -271,7 +271,7 @@ Generate Python code that performs this analysis step and returns results in the
                         {"role": "user", "content": user_message}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0.2,
+                    temperature=0.1,
                     max_tokens=3000
                 )
                 return json.loads(response.choices[0].message.content)
@@ -280,7 +280,7 @@ Generate Python code that performs this analysis step and returns results in the
                 response = self.client.messages.create(
                     model=self.model_name,
                     max_tokens=3000,
-                    temperature=0.2,
+                    temperature=0.1,
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
@@ -347,7 +347,7 @@ Generate Python code that performs this analysis step and returns results in the
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ],
-                    temperature=0.2,
+                    temperature=0.1,
                     max_tokens=800
                 )
                 return response.choices[0].message.content
@@ -356,7 +356,7 @@ Generate Python code that performs this analysis step and returns results in the
                 response = self.client.messages.create(
                     model=self.model_name,
                     max_tokens=800,
-                    temperature=0.2,
+                    temperature=0.1,
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
