@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from services.llm_service import LLMService
 from services.analysis_engine import AnalysisEngine
 from services.code_executor import CodeExecutor
-from services.plan_parser import PlanParser
 from utils.csv_handler import CSVHandler
 from utils.dependency_resolver import DependencyResolver
 import plotly.express as px
@@ -80,23 +79,17 @@ def main():
             st.rerun()
 
     # Main content area
-    tab1, tab2 = st.tabs(["📁 Data Upload & Analysis", "📊 Results"])
+    st.header("📁 Data Upload & Analysis")
 
-    with tab1:
-        handle_data_upload()
+    handle_data_upload()
 
-        # Show analysis planning in the same tab if data is uploaded
-        if st.session_state.uploaded_data is not None:
-            st.markdown("---")
-            handle_analysis_planning(model_provider, model_name, api_key)
-
-    with tab2:
-        handle_results_display()
+    # Show analysis planning in the same tab if data is uploaded
+    if st.session_state.uploaded_data is not None:
+        st.markdown("---")
+        handle_analysis_planning(model_provider, model_name, api_key)
 
 
 def handle_data_upload():
-    st.header("📁 Data Upload")
-
     uploaded_file = st.file_uploader(
         "Choose a CSV file",
         type=['csv'],
@@ -169,7 +162,7 @@ def handle_analysis_planning(model_provider, model_name, api_key):
         help="Describe what kind of analysis you want to perform on your data"
     )
 
-    if st.button("🚀 Generate Analysis Plan", type="primary"):
+    if st.button("🚀 Generate Analysis", type="primary"):
         if not analysis_prompt.strip():
             st.error("Please enter analysis instructions.")
             return
@@ -246,49 +239,86 @@ def execute_analysis_plan(llm_service):
         total_steps = len(st.session_state.current_plan['steps'])
         completed_steps = 0
 
-        # Execute steps in parallel groups
+        # Execute steps in dependency groups (sequential groups, parallel within groups)
         for group_idx, group in enumerate(execution_groups):
             status_text.text(
-                f"🤖 AI generating and executing group {group_idx + 1}/{len(execution_groups)} (up to {len(group)} steps in parallel)")
+                f"🤖 AI generating and executing group {group_idx + 1}/{len(execution_groups)} ({len(group)} steps)")
+
+            # For thread safety with Streamlit, we'll collect results first, then update UI
+            group_results = {}
 
             # Execute steps in current group in parallel
             with ThreadPoolExecutor(max_workers=min(len(group), 4)) as executor:
-                futures = {}
+                # Submit all tasks
+                future_to_step = {
+                    executor.submit(
+                        execute_single_step,
+                        step,
+                        llm_service,
+                        code_executor,
+                        st.session_state.uploaded_data,
+                        st.session_state.get('max_retries', 1)
+                    ): step
+                    for step in group
+                }
 
-                for step in group:
-                    future = executor.submit(execute_single_step, step, llm_service, code_executor,
-                                             st.session_state.uploaded_data, st.session_state.max_retries)
-                    futures[future] = step
-
-                # Process completed steps
-                for future in as_completed(futures):
-                    step = futures[future]
+                # Collect results as they complete
+                for future in as_completed(future_to_step):
+                    step = future_to_step[future]
                     try:
                         result = future.result()
-                        st.session_state.execution_status[step['id']]['status'] = 'completed'
-                        st.session_state.execution_status[step['id']]['result'] = result
-                        completed_steps += 1
 
-                        # Update progress
-                        progress_bar.progress(completed_steps / total_steps)
-
-                        # Display result
-                        with results_container:
-                            display_step_result(step, result)
+                        # Check if result indicates success or failure
+                        if result.get('error'):
+                            group_results[step['id']] = {
+                                'status': 'failed',
+                                'result': None,
+                                'error': result.get('error', 'Unknown error')
+                            }
+                        else:
+                            group_results[step['id']] = {
+                                'status': 'completed',
+                                'result': result,
+                                'error': None
+                            }
 
                     except Exception as e:
-                        st.session_state.execution_status[step['id']]['status'] = 'failed'
-                        st.session_state.execution_status[step['id']]['error'] = str(e)
-                        completed_steps += 1
-                        progress_bar.progress(completed_steps / total_steps)
+                        group_results[step['id']] = {
+                            'status': 'failed',
+                            'result': None,
+                            'error': str(e)
+                        }
 
-                        with results_container:
-                            st.error(f"❌ Step '{step['title']}' failed: {str(e)}")
+            # Update session state and UI after all threads complete
+            for step in group:
+                step_id = step['id']
+                if step_id in group_results:
+                    result_data = group_results[step_id]
+
+                    # Update session state
+                    st.session_state.execution_status[step_id]['status'] = result_data['status']
+                    st.session_state.execution_status[step_id]['result'] = result_data['result']
+                    st.session_state.execution_status[step_id]['error'] = result_data['error']
+
+                    completed_steps += 1
+
+                    # Update progress
+                    progress_bar.progress(completed_steps / total_steps)
+
+                    # Display result
+                    with results_container:
+                        if result_data['status'] == 'completed':
+                            display_step_result(step, result_data['result'])
+                        else:
+                            st.error(f"❌ Step '{step['title']}' failed: {result_data['error']}")
 
         status_text.text("✅ AI-powered analysis execution completed! All steps generated and executed automatically.")
 
     except Exception as e:
         st.error(f"❌ Error executing analysis plan: {str(e)}")
+        # Log the full traceback for debugging
+        import traceback
+        st.error(f"Full traceback: {traceback.format_exc()}")
 
 
 def execute_single_step(step, llm_service, code_executor, data, max_retries=1):
@@ -357,6 +387,7 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=1):
                 st.warning(f"⚠️ Attempt {attempt + 1} failed: {result.get('error', 'Unknown error')}")
             else:
                 st.error(f"❌ All {max_retries + 1} attempts failed")
+            continue
 
     # If we get here, all attempts failed
     if last_error:
@@ -414,7 +445,11 @@ def display_step_result(step, result):
                 st.session_state.viz_counter = 0
             st.session_state.viz_counter += 1
             unique_key = f"viz_{step['id']}_{st.session_state.viz_counter}"
-            st.plotly_chart(result['visualization'], use_container_width=True, key=unique_key)
+            if isinstance(result['visualization'], dict):
+                for key, chart in result['visualization'].items():
+                    st.plotly_chart(chart, use_container_width=False, key=f"{unique_key}_{key}")
+            else:
+                st.plotly_chart(result['visualization'], use_container_width=True, key=unique_key)
 
         if 'insights' in result:
             st.info(f"💡 **Initial Insights:** {result['insights']}")

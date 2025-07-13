@@ -61,8 +61,8 @@ class CodeExecutor:
                 result = {'data': result}
 
             # Process visualization if present
-            if 'visualization' in result and result['visualization']:
-                result['visualization'] = self._process_visualization(result['visualization'])
+            # if 'visualization' in result and result['visualization']:
+            #     result['visualization'] = self._process_visualization(result['visualization'])
 
             return result
 
@@ -92,36 +92,90 @@ class CodeExecutor:
         finally:
             sys.stdout = old_stdout
 
-    def _process_visualization(self, viz):
-        """Process visualization objects to ensure they're displayable"""
+    # def _process_visualization(self, viz):
+    #     """Process visualization objects to ensure they're displayable"""
+    #
+    #     try:
+    #         import plotly.graph_objects as go
+    #
+    #         # Check if it's already a proper plotly Figure
+    #         if isinstance(viz, go.Figure):
+    #             return viz
+    #
+    #         # Handle Matplotlib figures - convert to plotly
+    #         elif hasattr(viz, 'savefig'):
+    #             return self._convert_matplotlib_to_plotly(viz)
+    #
+    #         # Handle seaborn plots (which are matplotlib underneath)
+    #         elif hasattr(viz, 'figure'):
+    #             return self._convert_matplotlib_to_plotly(viz.figure)
+    #
+    #         # Handle dictionary representations of plotly figures
+    #         elif isinstance(viz, dict):
+    #             if 'data' in viz and 'layout' in viz:
+    #                 try:
+    #                     return go.Figure(data=viz.get('data', []), layout=viz.get('layout', {}))
+    #                 except Exception:
+    #                     return None
+    #             else:
+    #                 return None
+    #
+    #         # Handle list-like objects (might be plotly data)
+    #         elif isinstance(viz, list):
+    #             try:
+    #                 return go.Figure(data=viz)
+    #             except Exception:
+    #                 return None
+    #
+    #         # Handle other plotly-like objects
+    #         elif hasattr(viz, 'show') and hasattr(viz, 'data') and hasattr(viz, 'layout'):
+    #             try:
+    #                 # Try to convert to proper Figure by extracting data and layout
+    #                 data = getattr(viz, 'data', [])
+    #                 layout = getattr(viz, 'layout', {})
+    #                 return go.Figure(data=data, layout=layout)
+    #             except Exception:
+    #                 return None
+    #
+    #         # Handle string representations or other invalid objects
+    #         else:
+    #             return None
+    #
+    #     except Exception as e:
+    #         # Log the error but don't fail the entire analysis
+    #         return None
 
-        try:
-            # Handle Plotly figures
-            if hasattr(viz, 'show'):
-                return viz
-
-            # Handle Matplotlib figures
-            elif hasattr(viz, 'savefig'):
-                # Convert matplotlib figure to plotly if needed
-                return self._convert_matplotlib_to_plotly(viz)
-
-            # Handle other visualization types
-            else:
-                return viz
-
-        except Exception as e:
-            return f"Visualization processing failed: {str(e)}"
-
-    def _convert_matplotlib_to_plotly(self, fig):
-        """Convert matplotlib figure to plotly figure"""
-
-        try:
-            import plotly.tools as tls
-            plotly_fig = tls.mpl_to_plotly(fig)
-            return plotly_fig
-        except Exception:
-            # If conversion fails, return the original figure
-            return fig
+    # def _convert_matplotlib_to_plotly(self, fig):
+    #     """Convert matplotlib figure to plotly figure"""
+    #
+    #     try:
+    #         # Try plotly's mpl_to_plotly converter first
+    #         import plotly.tools as tls
+    #         plotly_fig = tls.mpl_to_plotly(fig)
+    #         return plotly_fig
+    #     except Exception:
+    #         try:
+    #             # Alternative: create a simple plotly figure with the same data
+    #             import plotly.graph_objects as go
+    #
+    #             # Create a basic plotly figure
+    #             plotly_fig = go.Figure()
+    #
+    #             # Try to extract data from matplotlib axes
+    #             if hasattr(fig, 'axes') and fig.axes:
+    #                 ax = fig.axes[0]
+    #                 for line in ax.get_lines():
+    #                     plotly_fig.add_trace(go.Scatter(
+    #                         x=line.get_xdata(),
+    #                         y=line.get_ydata(),
+    #                         mode='lines',
+    #                         name=line.get_label() if line.get_label() else None
+    #                     ))
+    #
+    #             return plotly_fig
+    #         except Exception:
+    #             # If all conversion attempts fail, return None
+    #             return None
 
     def validate_code(self, code: str) -> Dict[str, Any]:
         """Validate code for potential security issues and syntax errors"""

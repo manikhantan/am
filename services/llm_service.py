@@ -45,7 +45,8 @@ Return a JSON object with the following structure:
             "dependencies": ["step_id1", "step_id2"] or [],
             "estimated_time": "estimated time to complete",
             "analysis_type": "exploratory|statistical|visualization|modeling",
-            "code_preview": "Brief code preview or approach"
+            "code_preview": "Brief code preview or approach",
+            "expected_output": "Brief summary of expected output"
         }
     ]
 }
@@ -113,13 +114,19 @@ Generate a comprehensive analysis plan that addresses the user's requirements wh
 
 CRITICAL REQUIREMENTS:
 1. Return ONLY executable Python code - no markdown, no explanations, no code blocks
-2. Use pandas, numpy, matplotlib, seaborn, and plotly for analysis
-3. Assume the dataframe is available as 'df'
-4. Return results in a structured format (dictionary with keys: 'summary', 'data', 'visualization', 'insights')
-5. Handle missing values and data quality issues
-6. Include proper error handling with try/except blocks
-7. Generate visualizations when appropriate using plotly
-8. Provide actionable insights
+2. FIX the specific error that occurred in the previous code
+3. Use pandas, numpy, matplotlib, seaborn, and plotly for analysis
+4. Assume the dataframe is available as 'df'
+5. Return results in a structured format (dictionary with keys: 'summary', 'data', 'visualization', 'insights')
+6. Handle missing values and data quality issues with proper error handling
+7. Include comprehensive try/except blocks to prevent similar errors
+8. Generate visualizations when appropriate using ONLY plotly (px or go)
+
+VISUALIZATION REQUIREMENTS:
+- Use ONLY plotly.express (px) or plotly.graph_objects (go) for visualizations
+- DO NOT use matplotlib.pyplot or seaborn for final visualizations
+- Ensure all visualizations are plotly Figure objects
+- If visualization creation fails, set visualization to None
 
 Code must follow this exact structure:
 import pandas as pd
