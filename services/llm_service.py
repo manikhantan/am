@@ -10,6 +10,12 @@ class LLMService:
         self.api_key = api_key
         self.client = None
         self._initialize_client()
+
+    def _get_temperature(self):
+        if self.model_name == 'o4-mini':
+            return 1
+        else:
+            return 0
     
     def _initialize_client(self):
         """Initialize the appropriate LLM client"""
@@ -73,14 +79,14 @@ Generate a comprehensive analysis plan that addresses the user's requirements wh
                         {"role": "user", "content": user_message}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0.1
+                    temperature=self._get_temperature()
                 )
                 return json.loads(response.choices[0].message.content)
             
             elif self.provider == "anthropic":
                 response = self.client.messages.create(
                     model=self.model_name,
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
@@ -159,7 +165,7 @@ Generate Python code that performs this analysis step and returns results in the
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ],
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     max_tokens=2000
                 )
                 code = response.choices[0].message.content
@@ -169,7 +175,7 @@ Generate Python code that performs this analysis step and returns results in the
                 response = self.client.messages.create(
                     model=self.model_name,
                     max_tokens=2000,
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
@@ -271,7 +277,7 @@ Generate Python code that performs this analysis step and returns results in the
                         {"role": "user", "content": user_message}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     max_tokens=3000
                 )
                 return json.loads(response.choices[0].message.content)
@@ -280,7 +286,7 @@ Generate Python code that performs this analysis step and returns results in the
                 response = self.client.messages.create(
                     model=self.model_name,
                     max_tokens=3000,
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
@@ -347,7 +353,7 @@ Generate Python code that performs this analysis step and returns results in the
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ],
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     max_tokens=800
                 )
                 return response.choices[0].message.content
@@ -356,7 +362,7 @@ Generate Python code that performs this analysis step and returns results in the
                 response = self.client.messages.create(
                     model=self.model_name,
                     max_tokens=800,
-                    temperature=0.1,
+                    temperature=self._get_temperature(),
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]
