@@ -73,15 +73,14 @@ Generate a comprehensive analysis plan that addresses the user's requirements wh
                         {"role": "user", "content": user_message}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0.3
+                    temperature=0
                 )
                 return json.loads(response.choices[0].message.content)
             
             elif self.provider == "anthropic":
                 response = self.client.messages.create(
                     model=self.model_name,
-                    max_tokens=4000,
-                    temperature=0.3,
+                    temperature=0,
                     messages=[
                         {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
                     ]

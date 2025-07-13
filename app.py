@@ -46,13 +46,13 @@ def main():
         if model_provider == "OpenAI":
             model_name = st.selectbox(
                 "Select OpenAI Model:",
-                ["gpt-4o", "gpt-4", "gpt-3.5-turbo"],
-                help="gpt-4o is the newest OpenAI model"
+                ["gpt-4o", "gpt-4.1", "o4-mini", "o3"],
+                help="gpt-41 is the newest OpenAI model"
             )
         else:
             model_name = st.selectbox(
                 "Select Anthropic Model:",
-                ["claude-sonnet-4-20250514", "claude-3-7-sonnet-20250219"],
+                ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-3-7-sonnet-latest", "claude-3-5-sonnet-20241022"],
                 help="claude-sonnet-4-20250514 is the newest Anthropic model"
             )
         
