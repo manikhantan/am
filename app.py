@@ -22,7 +22,7 @@ if 'execution_status' not in st.session_state:
 if 'uploaded_data' not in st.session_state:
     st.session_state.uploaded_data = None
 if 'max_retries' not in st.session_state:
-    st.session_state.max_retries = 3
+    st.session_state.max_retries = 1
 
 st.set_page_config(
     page_title="AI Data Analysis Platform",
@@ -73,17 +73,6 @@ def main():
                 type="password",
                 help="Enter your Anthropic API key"
             )
-
-        # Retry configuration
-        st.subheader("🔄 Retry Settings")
-        max_retries = st.slider(
-            "Max Retries for Failed Code:",
-            min_value=1,
-            max_value=5,
-            value=3,
-            help="Number of times to retry code generation if execution fails"
-        )
-        st.session_state.max_retries = max_retries
 
         if st.button("🔄 Clear Session"):
             for key in st.session_state.keys():
@@ -302,7 +291,7 @@ def execute_analysis_plan(llm_service):
         st.error(f"❌ Error executing analysis plan: {str(e)}")
 
 
-def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
+def execute_single_step(step, llm_service, code_executor, data, max_retries=1):
     """Execute a single analysis step using AI code generation + automated execution with retry mechanism"""
 
     # Get max_retries from session state or use default
@@ -312,19 +301,21 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
     generated_code = None
     last_error = None
 
-    for attempt in range(max_retries):
-        try:
-            # Step 1: AI generates Python code for this analysis step
-            if attempt == 0:
-                generated_code = llm_service.generate_analysis_code(step, data)
-            else:
-                # Retry with error feedback - show retry message
-                st.warning(f"🔄 Retry {attempt}/{max_retries - 1} - Regenerating code after error...")
-                generated_code = llm_service.regenerate_code_with_error(
-                    step, data, generated_code, last_error
-                )
+    for attempt in range(max_retries + 1):
+        # Step 1: AI generates Python code for this analysis step
+        # Generation errors are NOT caught here - they should fail immediately
+        if attempt == 0:
+            generated_code = llm_service.generate_analysis_code(step, data)
+        else:
+            # Retry with error feedback - show retry message
+            st.warning(f"🔄 Retry {attempt}/{max_retries + 1} - Regenerating code after execution error...")
+            generated_code = llm_service.regenerate_code_with_error(
+                step, data, generated_code, last_error
+            )
 
-            # Step 2: Code executor safely runs the AI-generated code
+        # Step 2: Code executor safely runs the AI-generated code
+        # Only catch execution errors, not generation errors
+        try:
             result = code_executor.execute_code(generated_code, data)
 
             # Check if execution succeeded (no error in result)
@@ -351,22 +342,22 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
             else:
                 # Code execution failed - store error for next retry
                 last_error = result
-                if attempt < max_retries - 1:
-                    st.warning(f"⚠️ Attempt {attempt + 1} failed: {result.get('error', 'Unknown error')}")
+                if attempt < max_retries:
+                    st.warning(f"⚠️ Execution attempt {attempt + 1} failed: {result.get('error', 'Unknown error')}")
                 else:
-                    st.error(f"❌ All {max_retries} attempts failed")
+                    st.error(f"❌ All {max_retries + 1} execution attempts failed")
 
         except Exception as e:
-            # Exception during code generation or other unexpected error
+            # Exception during code execution (not generation)
             last_error = {
-                'error': f"Code generation/execution failed: {str(e)}",
-                'summary': f"Failed on attempt {attempt + 1}: {str(e)}",
+                'error': f"Code execution failed: {str(e)}",
+                'summary': f"Execution failed on attempt {attempt + 1}: {str(e)}",
                 'traceback': str(e)
             }
-            if attempt < max_retries - 1:
-                st.warning(f"⚠️ Attempt {attempt + 1} failed: {str(e)}")
+            if attempt < max_retries:
+                st.warning(f"⚠️ Execution attempt {attempt + 1} failed: {str(e)}")
             else:
-                st.error(f"❌ All {max_retries} attempts failed")
+                st.error(f"❌ All {max_retries + 1} execution attempts failed")
 
     # If we get here, all attempts failed
     if last_error:
@@ -376,17 +367,17 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=3):
                 'execution_method': 'AI Code Generation + Automated Execution (Failed)',
                 'generated_code': generated_code[:200] + '...' if generated_code and len(
                     generated_code) > 200 else generated_code,
-                'attempts': max_retries,
+                'attempts': max_retries + 1,
                 'final_failure': True
             }
         return last_error
     else:
         return {
-            'error': f"Failed after {max_retries} attempts",
-            'summary': f"All {max_retries} attempts failed for step: {step['title']}",
+            'error': f"Failed after {max_retries + 1} attempts",
+            'summary': f"All {max_retries + 1} attempts failed for step: {step['title']}",
             '_metadata': {
                 'step_id': step['id'],
-                'attempts': max_retries,
+                'attempts': max_retries + 1,
                 'final_failure': True
             }
         }
