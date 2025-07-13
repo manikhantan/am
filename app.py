@@ -448,6 +448,10 @@ def display_step_result(step, result):
             if isinstance(result['visualization'], dict):
                 for key, chart in result['visualization'].items():
                     st.plotly_chart(chart, use_container_width=False, key=f"{unique_key}_{key}")
+            elif isinstance(result['visualization'], list):
+                for i, chart in enumerate(result['visualization']):
+                    st.plotly_chart(chart, use_container_width=False, key=f"{unique_key}_{i}")
+
             else:
                 st.plotly_chart(result['visualization'], use_container_width=True, key=unique_key)
 
