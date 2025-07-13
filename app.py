@@ -302,62 +302,61 @@ def execute_single_step(step, llm_service, code_executor, data, max_retries=1):
     last_error = None
 
     for attempt in range(max_retries + 1):
-        # Step 1: AI generates Python code for this analysis step
-        # Generation errors are NOT caught here - they should fail immediately
-        if attempt == 0:
-            generated_code = llm_service.generate_analysis_code(step, data)
-        else:
-            # Retry with error feedback - show retry message
-            st.warning(f"🔄 Retry {attempt}/{max_retries + 1} - Regenerating code after execution error...")
-            generated_code = llm_service.regenerate_code_with_error(
-                step, data, generated_code, last_error
-            )
-
-        # Step 2: Code executor safely runs the AI-generated code
-        # Only catch execution errors, not generation errors
         try:
+            # Step 1: AI generates Python code for this analysis step
+            if attempt == 0:
+                generated_code = llm_service.generate_analysis_code(step, data)
+            else:
+                # Retry with error feedback - show retry message
+                st.warning(f"🔄 Retry {attempt}/{max_retries} - Regenerating code after error...")
+                generated_code = llm_service.regenerate_code_with_error(
+                    step, data, generated_code, last_error
+                )
+
+            # Step 2: Code executor safely runs the AI-generated code
             result = code_executor.execute_code(generated_code, data)
 
-            # Check if execution succeeded (no error in result)
-            if not result.get('error'):
-                # Success! Step 3: Have LLM analyze the execution results for insights
-                try:
-                    analysis = llm_service.analyze_step_results(step, result, data)
-                    result['ai_analysis'] = analysis
-                except Exception as e:
-                    result['ai_analysis'] = f"Could not analyze results: {str(e)}"
-
-                # Add metadata about the automated execution
-                result['_metadata'] = {
-                    'step_id': step['id'],
-                    'execution_method': 'AI Code Generation + Automated Execution + AI Analysis',
-                    'generated_code': generated_code[:200] + '...' if len(generated_code) > 200 else generated_code,
-                    'attempts': attempt + 1
-                }
-
-                if attempt > 0:
-                    st.success(f"✅ Success after {attempt + 1} attempts!")
-
-                return result
-            else:
-                # Code execution failed - store error for next retry
-                last_error = result
-                if attempt < max_retries:
-                    st.warning(f"⚠️ Execution attempt {attempt + 1} failed: {result.get('error', 'Unknown error')}")
-                else:
-                    st.error(f"❌ All {max_retries + 1} execution attempts failed")
-
         except Exception as e:
-            # Exception during code execution (not generation)
+            # Exception during code generation or execution
             last_error = {
-                'error': f"Code execution failed: {str(e)}",
-                'summary': f"Execution failed on attempt {attempt + 1}: {str(e)}",
+                'error': f"Code generation/execution failed: {str(e)}",
+                'summary': f"Failed on attempt {attempt + 1}: {str(e)}",
                 'traceback': str(e)
             }
             if attempt < max_retries:
-                st.warning(f"⚠️ Execution attempt {attempt + 1} failed: {str(e)}")
+                st.warning(f"⚠️ Attempt {attempt + 1} failed: {str(e)}")
             else:
-                st.error(f"❌ All {max_retries + 1} execution attempts failed")
+                st.error(f"❌ All {max_retries + 1} attempts failed")
+            continue
+
+        # Check if execution succeeded (no error in result) - NOW OUTSIDE try-catch
+        if not result.get('error'):
+            # Success! Step 3: Have LLM analyze the execution results for insights
+            try:
+                analysis = llm_service.analyze_step_results(step, result, data)
+                result['ai_analysis'] = analysis
+            except Exception as e:
+                result['ai_analysis'] = f"Could not analyze results: {str(e)}"
+
+            # Add metadata about the automated execution
+            result['_metadata'] = {
+                'step_id': step['id'],
+                'execution_method': 'AI Code Generation + Automated Execution + AI Analysis',
+                'generated_code': generated_code[:200] + '...' if len(generated_code) > 200 else generated_code,
+                'attempts': attempt + 1
+            }
+
+            if attempt > 0:
+                st.success(f"✅ Success after {attempt + 1} attempts!")
+
+            return result
+        else:
+            # Code execution failed - store error for next retry
+            last_error = result
+            if attempt < max_retries:
+                st.warning(f"⚠️ Attempt {attempt + 1} failed: {result.get('error', 'Unknown error')}")
+            else:
+                st.error(f"❌ All {max_retries + 1} attempts failed")
 
     # If we get here, all attempts failed
     if last_error:

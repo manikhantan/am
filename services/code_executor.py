@@ -12,6 +12,13 @@ from typing import Dict, Any
 import contextlib
 
 
+class CodeExecutionError(Exception):
+    """Custom exception for code execution failures that carries error details"""
+    def __init__(self, message, error_dict):
+        super().__init__(message)
+        self.error_dict = error_dict
+
+
 class CodeExecutor:
     def __init__(self):
         self.execution_context = {
@@ -29,58 +36,61 @@ class CodeExecutor:
     def execute_code(self, code: str, data: pd.DataFrame) -> Dict[str, Any]:
         """Safely execute analysis code with the provided data"""
 
+        # Prepare execution environment
+        execution_env = self.execution_context.copy()
+        execution_env['df'] = data.copy()
+
+        # Capture stdout for any print statements
+        old_stdout = sys.stdout
+        sys.stdout = captured_output = io.StringIO()
+
         try:
-            # Prepare execution environment
-            execution_env = self.execution_context.copy()
-            execution_env['df'] = data.copy()
+            # Execute the code
+            exec(code, execution_env)
 
-            # Capture stdout for any print statements
-            old_stdout = sys.stdout
-            sys.stdout = captured_output = io.StringIO()
+            # Get the result
+            result = execution_env.get('result', {})
 
-            try:
-                # Execute the code
-                exec(code, execution_env)
+            # Capture any print output
+            output = captured_output.getvalue()
+            if output.strip():
+                result['console_output'] = output.strip()
 
-                # Get the result
-                result = execution_env.get('result', {})
+            # Validate result structure
+            if not isinstance(result, dict):
+                result = {'data': result}
 
-                # Capture any print output
-                output = captured_output.getvalue()
-                if output.strip():
-                    result['console_output'] = output.strip()
+            # Process visualization if present
+            if 'visualization' in result and result['visualization']:
+                result['visualization'] = self._process_visualization(result['visualization'])
 
-                # Validate result structure
-                if not isinstance(result, dict):
-                    result = {'data': result}
-
-                # Process visualization if present
-                if 'visualization' in result and result['visualization']:
-                    result['visualization'] = self._process_visualization(result['visualization'])
-
-                return result
-
-            finally:
-                sys.stdout = old_stdout
+            return result
 
         except SyntaxError as e:
             error_msg = f"Code syntax error: {str(e)}"
-            return {
+            error_dict = {
                 'error': error_msg,
                 'traceback': f"Syntax error at line {e.lineno}: {e.text}",
                 'summary': f"Syntax error: {str(e)}",
                 'code_preview': code[:500] + '...' if len(code) > 500 else code
             }
+            # Create a custom exception that carries the error details
+            raise CodeExecutionError(error_msg, error_dict)
+
         except Exception as e:
             error_msg = f"Code execution failed: {str(e)}"
             traceback_str = traceback.format_exc()
-
-            return {
+            error_dict = {
                 'error': error_msg,
                 'traceback': traceback_str,
                 'summary': f"Execution failed: {str(e)}",
                 'code_preview': code[:500] + '...' if len(code) > 500 else code
             }
+            # Create a custom exception that carries the error details
+            raise CodeExecutionError(error_msg, error_dict)
+
+        finally:
+            sys.stdout = old_stdout
 
     def _process_visualization(self, viz):
         """Process visualization objects to ensure they're displayable"""
