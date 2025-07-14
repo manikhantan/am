@@ -273,13 +273,15 @@ def execute_analysis_plan(llm_service):
                             group_results[step['id']] = {
                                 'status': 'failed',
                                 'result': None,
-                                'error': result.get('error', 'Unknown error')
+                                'error': result.get('error', 'Unknown error'),
+                                'analysis_type': step['analysis_type']
                             }
                         else:
                             group_results[step['id']] = {
                                 'status': 'completed',
                                 'result': result,
-                                'error': None
+                                'error': None,
+                                'analysis_type': step['analysis_type']
                             }
 
                     except Exception as e:
@@ -308,7 +310,8 @@ def execute_analysis_plan(llm_service):
                     # Display result
                     with results_container:
                         if result_data['status'] == 'completed':
-                            display_step_result(step, result_data['result'])
+                            if result_data['analysis_type'] in ['visualization']:
+                                display_step_result(step, result_data['result'])
                         else:
                             st.error(f"❌ Step '{step['title']}' failed: {result_data['error']}")
 
@@ -589,7 +592,7 @@ def handle_results_display():
         if status['status'] == 'completed' and status['result']:
             # Find the step details
             step = next((s for s in st.session_state.current_plan['steps'] if s['id'] == step_id), None)
-            if step:
+            if step and step['analysis_type'] in ['visualization']:
                 display_step_result(step, status['result'])
         elif status['status'] == 'failed':
             st.error(f"❌ Step failed: {status['error']}")

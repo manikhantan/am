@@ -53,11 +53,11 @@ Return a JSON object with the following structure:
 
 Guidelines:
 1. Create logical, sequential steps that build upon each other
-2. Include data exploration, cleaning, analysis, and visualization steps
-3. Consider the data types and structure when planning
+2. Consider the data types and structure when planning
+3. Stick to user goals, and don't plan for things beyond the scope of user prompt
 4. Make steps granular enough to be executed independently
 5. Include dependency information for parallel execution
-6. Focus on actionable insights and recommendations"""
+"""
 
         user_message = f"""
 Dataset Information:
@@ -115,7 +115,7 @@ Generate a comprehensive analysis plan that addresses the user's requirements wh
 CRITICAL REQUIREMENTS:
 1. Return ONLY executable Python code - no markdown, no explanations, no code blocks
 2. FIX the specific error that occurred in the previous code
-3. Use pandas, numpy, matplotlib, seaborn, and plotly for analysis
+3. Use pandas, numpy, and plotly for analysis
 4. Assume the dataframe is available as 'df'
 5. Return results in a structured format (dictionary with keys: 'summary', 'data', 'visualization', 'insights')
 6. Handle missing values and data quality issues with proper error handling
@@ -237,7 +237,7 @@ Generate Python code that performs this analysis step and returns results in the
         CRITICAL REQUIREMENTS:
         1. Return ONLY executable Python code - no markdown, no explanations, no code blocks
         2. FIX the specific error that occurred in the previous code
-        3. Use pandas, numpy, matplotlib, seaborn, and plotly for analysis
+        3. Use pandas, numpy, and plotly for analysis
         4. Assume the dataframe is available as 'df'
         5. Return results in a structured format (dictionary with keys: 'summary', 'data', 'visualization', 'insights')
         6. Handle missing values and data quality issues with proper error handling
