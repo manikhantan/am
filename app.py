@@ -163,8 +163,22 @@ class LLMService:
         return self._clean_response(response, is_json=False)
 
     def generate_report(self, original_prompt: str, results: List[Dict]) -> Optional[str]:
-        system_prompt = "You are an expert data analyst. Synthesize the following analysis results into a concise, final report in Markdown format. Focus on summarizing the key findings."
-        user_prompt = f"Original Request: {original_prompt}\n\nAnalysis Results:\n{json.dumps(results, indent=2)}"
+        """
+        Generates a final report by synthesizing analysis results, including specific data points.
+        """
+        system_prompt = """
+        You are an expert data analyst. Your task is to synthesize the provided analysis results into a final, comprehensive report in Markdown format.
+
+        **Instructions:**
+        1.  Start with a high-level summary of the findings based on the user's original request.
+        2.  For each analysis step, create a section in your report.
+        3.  Use the `summary` text for a general overview of the step's findings.
+        4.  **Crucially, you MUST incorporate the specific data points from the `data_points` list into your narrative.** For example, if `data_points` lists the top 5 products, explicitly name them and their sales figures in your report. Do not just say "the top products were identified."
+        5.  Structure the report logically, using headings, bullet points, and bold text to improve readability.
+        6.  Conclude with a final summary or recommendations if applicable.
+        7.  The final output should be a single Markdown text block.
+        """
+        user_prompt = f"Original Request: {original_prompt}\n\nAnalysis Results:\n{json.dumps(results, indent=2, default=str)}"
         return self._call_llm(system_prompt, user_prompt)
 
 
@@ -184,7 +198,7 @@ class AIAnalysisApp:
     def _initialize_state(self):
         defaults = {
             'df': None, 'current_plan': None, 'execution_results': [], 'visualizations': [],
-            'api_key': "", 'model_provider': "OpenAI", 'model_name': "gpt-4o",
+            'api_key': "", 'model_provider': "OpenAI", 'model_name': "gpt-4.1",
         }
         for key, value in defaults.items():
             if key not in st.session_state:
@@ -207,8 +221,8 @@ class AIAnalysisApp:
             provider = st.selectbox("LLM Provider", ["OpenAI", "Anthropic"], key='model_provider')
             if provider == "OpenAI":
                 st.selectbox("Model", ["gpt-4.1", "gpt-4o"], key='model_name')
-            else:
-                st.selectbox("Model", ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-3-7-sonnet-latest", "claude-3-5-sonnet-latest"], key='model_name')
+            else: # Anthropic
+                st.selectbox("Model", ["claude-opus-4-20250514", "claude-sonnet-4-20250514", "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"], key='model_name')
             st.text_input("API Key", type="password", key='api_key')
             if st.button("🔄 Clear Session"):
                 for key in list(st.session_state.keys()): del st.session_state[key]
@@ -278,8 +292,16 @@ class AIAnalysisApp:
                 return False  # Stop execution
 
             # Collect results for the final report
-            step_result = {'step': step['title'], 'summary': result.get('summary', 'No summary.')}
+            step_result = {'step': step['title']}
+            if 'summary' in result and result['summary']:
+                step_result['summary'] = result['summary']
+            # Check if 'data' exists, is a DataFrame, and is not empty
+            if 'data' in result and isinstance(result['data'], pd.DataFrame) and not result['data'].empty:
+                # Convert dataframe to a list of dicts, which is JSON-friendly
+                step_result['data_points'] = result['data'].to_dict(orient='records')
+
             st.session_state.execution_results.append(step_result)
+
             if result.get('visualization'):
                 st.session_state.visualizations.append((result['visualization'], step['title']))
         return True
@@ -307,8 +329,10 @@ class AIAnalysisApp:
         if st.session_state.visualizations:
             st.markdown("---")
             st.header("📊 Visualizations")
-            for viz in st.session_state.visualizations:
-                st.plotly_chart(viz[0], use_container_width=True, unique_key=viz[1])
+            # Use columns for better layout if there are multiple charts
+            for i, viz_tuple in enumerate(st.session_state.visualizations):
+                viz, title = viz_tuple
+                st.plotly_chart(viz, use_container_width=True, unique_key=title)
 
 
 # --------------------------------------------------------------------------
