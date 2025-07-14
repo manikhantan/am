@@ -281,7 +281,7 @@ class AIAnalysisApp:
             step_result = {'step': step['title'], 'summary': result.get('summary', 'No summary.')}
             st.session_state.execution_results.append(step_result)
             if result.get('visualization'):
-                st.session_state.visualizations.append(result['visualization'])
+                st.session_state.visualizations.append((result['visualization'], step['title']))
         return True
 
     def _execute_single_step_with_retry(self, llm: LLMService, step: Dict, data_summary: Dict) -> (Dict, str):
@@ -308,7 +308,7 @@ class AIAnalysisApp:
             st.markdown("---")
             st.header("📊 Visualizations")
             for viz in st.session_state.visualizations:
-                st.plotly_chart(viz, use_container_width=True)
+                st.plotly_chart(viz[0], use_container_width=True, unique_key=viz[1])
 
 
 # --------------------------------------------------------------------------
