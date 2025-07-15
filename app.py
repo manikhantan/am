@@ -135,13 +135,27 @@ class LLMService:
 
     def generate_analysis_plan(self, data_summary: Dict, user_prompt: str) -> Optional[Dict]:
         system_prompt = """
-        You are an expert data analyst. Generate a sequential, step-by-step analysis plan.
-        - When planning aggregations, focus on columns that represent meaningful business metrics (e.g., sales, revenue, price, quantity) rather than IDs.
-        - If asked to find 'top' items (e.g., top products), plan to identify the top 5.
-        - Do NOT create a separate step for data cleaning. Incorporate cleaning (like handling missing values) directly into the relevant analysis steps.
-        - Return a JSON object with a 'steps' key, which is a list of dictionaries. Each step must have 'id', 'title', and 'description'.
-        Example: {"steps": [{"id": "step_1", "title": "Top 5 Product Sales Analysis", "description": "Identify the top 5 products by total sales, handling any missing sales data."}]}
-        """
+You are an expert data analyst. Generate a sequential analysis plan where each step represents one code execution block.
+
+CRITICAL RULE: If operations can be chained together in a single piece of code without dependencies, they MUST be combined into one step.
+
+Guidelines:
+- Combine all related operations that can be executed together (aggregations, calculations, sorting, filtering, selecting top N)
+- Only create separate steps when step B genuinely cannot be executed until step A is complete AND the results need to be saved/reviewed
+- When planning aggregations, focus on columns that represent meaningful business metrics rather than IDs
+- If asked to find 'top' items (e.g., top products), plan to identify the top 5
+- Do NOT create separate steps for data cleaning. Incorporate cleaning directly into analysis steps
+- Return a JSON object with a 'steps' key, which is a list of dictionaries. Each step must have 'id', 'title', and 'description'
+
+Example of CORRECT consolidation:
+{"steps": [{"id": "step_1", "title": "Identify Top 5 Products by Revenue", "description": "Group by product, calculate total revenue for each product (handling missing values), sort by revenue descending, and select the top 5 products."}]}
+
+Example of INCORRECT separation (DO NOT DO THIS):
+{"steps": [
+  {"id": "step_1", "title": "Calculate Revenue by Product", "description": "Group by product and sum revenue"},
+  {"id": "step_2", "title": "Find Top 5", "description": "Sort by revenue and select top 5"}
+]}
+"""
         user_prompt = f"User Request: {user_prompt}\n\nData Summary: {json.dumps(data_summary)}"
         response = self._call_llm(system_prompt, user_prompt, json_mode=True)
         return self._clean_response(response, is_json=True)
