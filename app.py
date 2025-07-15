@@ -346,7 +346,7 @@ class AIAnalysisApp:
             # Use columns for better layout if there are multiple charts
             for i, viz_tuple in enumerate(st.session_state.visualizations):
                 viz, title = viz_tuple
-                st.plotly_chart(viz, use_container_width=True, unique_key=title)
+                st.plotly_chart(viz, use_container_width=True, key=title)
 
 
 # --------------------------------------------------------------------------
