@@ -317,7 +317,7 @@ class AIAnalysisApp:
             st.session_state.execution_results.append(step_result)
 
             if result.get('visualization'):
-                st.session_state.visualizations.append((result['visualization'], step['title']))
+                st.session_state.visualizations.append((result['visualization']))
         return True
 
     def _execute_single_step_with_retry(self, llm: LLMService, step: Dict, data_summary: Dict) -> (Dict, str):
@@ -343,10 +343,12 @@ class AIAnalysisApp:
         if st.session_state.visualizations:
             st.markdown("---")
             st.header("📊 Visualizations")
-            # Use columns for better layout if there are multiple charts
-            for i, viz_tuple in enumerate(st.session_state.visualizations):
-                viz, title = viz_tuple
-                st.plotly_chart(viz, use_container_width=True, key=title)
+            for i, viz in enumerate(st.session_state.visualizations):
+                if isinstance(viz, dict):
+                    for title, chrt in viz.items():
+                        st.plotly_chart(chrt, use_container_width=True, key=title)
+                else:
+                    st.plotly_chart(viz, use_container_width=True, key=f"viz_{i}")
 
 
 # --------------------------------------------------------------------------
