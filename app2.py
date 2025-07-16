@@ -3,6 +3,7 @@ import pandas as pd
 import openai
 from io import StringIO
 import warnings
+import os
 
 
 # --- Helper Functions ---
@@ -74,7 +75,7 @@ This app will use an AI to understand the data, generate analysis code, and crea
 """)
 
 # API Key input
-api_key = "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"
+api_key = os.getenv('OPENAI_API_KEY')
 
 uploaded_files = st.file_uploader(
     "Upload your CSV or XLS files",
