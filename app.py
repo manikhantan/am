@@ -75,7 +75,7 @@ This app will use an AI to understand the data, generate analysis code, and crea
 """)
 
 # API Key input
-api_key = os.getenv('OPENAI_API_KEY')
+api_key = st.secrets["api"]["key"]
 
 uploaded_files = st.file_uploader(
     "Upload your CSV or XLS files",
