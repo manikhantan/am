@@ -52,7 +52,7 @@ def get_llm_response(prompt, api_key):
     try:
         client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model="gpt-4.1",
             messages=[
                 {"role": "system",
                  "content": "You are a helpful data analysis assistant that writes clean, efficient, and modern Python pandas code."},
