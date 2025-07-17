@@ -574,7 +574,7 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
         if st.session_state.creative_time_series_df is not None and not st.session_state.creative_time_series_df.empty:
             st.subheader("Creative Deep Dive")
 
-            creative_list = st.session_state.creative_df.head(20)['Creative'].unique()
+            creative_list = st.session_state.creative_df.head(10)['Creative'].unique()
             selected_creative = st.selectbox("Select a Creative to Analyze:", creative_list,
                                              key="creative_select")
 
