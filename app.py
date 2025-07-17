@@ -135,6 +135,8 @@ if 'creative_time_series_df' not in st.session_state:
     st.session_state.creative_time_series_df = None
 if 'df_processed' not in st.session_state:
     st.session_state.df_processed = None
+if 'selected_deepdive_tab' not in st.session_state:
+    st.session_state.selected_deepdive_tab = 0
 
 # --- Main App UI ---
 
@@ -171,7 +173,7 @@ if uploaded_files:
                 **Instructions:**
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
-                3. Don't use other columns as proxies if the specific column is not available.
+                3. Don't use proxies if the specific column is not available. Use NAN or 0 if unavailable.
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `final_df`.
                 6. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
@@ -194,7 +196,7 @@ if uploaded_files:
                 **Instructions:**
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
-                3. Don't use other columns as proxies if the specific column is not available.
+                3. Don't use proxies if the specific column is not available. Use NAN or 0 if unavailable.
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `adgroup_df`.
                 6. `adgroup_df` must be grouped by ad group and contain: ['Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
@@ -217,15 +219,14 @@ if uploaded_files:
                 **Instructions:**
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
-                3. Don't use other columns as proxies if the specific column is not available.
+                3. Don't use proxies if the specific column is not available. Use NAN or 0 if unavailable.
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
-                5. Look for creative-related columns like 'Creative', 'Ad Creative', 'Ad', 'Ad Name', 'Creative Name', or similar.
-                6. The final output MUST be a pandas DataFrame named `creative_df`.
-                7. `creative_df` must be grouped by creative and contain: ['Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                8. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
-                9. Sort `creative_df` by 'Spends' in descending order.
-                10. If no creative column is found, set creative_df = None.
-                11. Provide ONLY the Python code, without any explanations or markdown.
+                5. The final output MUST be a pandas DataFrame named `creative_df`.
+                6. `creative_df` must be grouped by creative and contain: ['Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                8. Sort `creative_df` by 'Spends' in descending order.
+                9. If no creative column is found, set creative_df = None.
+                10. Provide ONLY the Python code, without any explanations or markdown.
                 """
                 creative_code = get_llm_response(creative_code_prompt, api_key)
                 if not creative_code:
@@ -259,10 +260,10 @@ if uploaded_files:
                     2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
                     3. Don't use other columns as proxies if the specific column is not available.
                     4. Group the data by Campaign and by time period ('{time_period}' for {period_name}).
-                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. Use agg method to aggregate.
-                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. Handle division by zero.
+                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
+                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
                     7. The final output MUST be a pandas DataFrame named `time_series_df`.
-                    8. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. The 'Date' column should be the start of the period.
+                    8. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
                     9. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     time_series_code = get_llm_response(time_series_code_prompt, api_key)
@@ -284,10 +285,10 @@ if uploaded_files:
                     2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
                     3. Don't use other columns as proxies if the specific column is not available.
                     4. Group the data by Ad Group, and by time period ('{time_period}' for {period_name}).
-                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. Use agg method to aggregate.
-                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. Handle division by zero.
+                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
+                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
                     7. The final output MUST be a pandas DataFrame named `adgroup_time_series_df`.
-                    8. `adgroup_time_series_df` must have columns like: 'Date', 'Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. The 'Date' column should be the start of the period.
+                    8. must have columns like: 'Date', 'Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
                     9. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     adgroup_time_series_code = get_llm_response(adgroup_time_series_code_prompt, api_key)
@@ -309,10 +310,10 @@ if uploaded_files:
                     2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
                     3. Don't use other columns as proxies if the specific column is not available.
                     4. Group the data by Creative and by time period ('{time_period}' for {period_name}).
-                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. Use agg method to aggregate.
-                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. Handle division by zero.
+                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
+                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
                     7. The final output MUST be a pandas DataFrame named `creative_time_series_df`.
-                    8. `creative_time_series_df` must have columns like: 'Date', 'Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. The 'Date' column should be the start of the period.
+                    8. `creative_time_series_df` must have columns like: 'Date', 'Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
                     9. If no creative column is found, set creative_time_series_df = None.
                     10. Provide ONLY the Python code, without any explanations or markdown.
                     """
@@ -403,11 +404,16 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
 
     # --- Deep Dive Analysis Section ---
     st.header("🔎 Deep Dive & Trend Analysis")
-
     # Create tabs for Campaign, Ad Group, and Creative analysis
-    tab1, tab2, tab3 = st.tabs(["📈 Campaign Analysis", "🎯 Ad Group Analysis", "🎨 Creative Analysis"])
+    tabs = ["📈 Campaign Analysis", "🎯 Ad Group Analysis", "🎨 Creative Analysis"]
 
-    with tab1:
+    selected = st.radio("Deep dive!", tabs, horizontal=True, index=st.session_state.selected_deepdive_tab)
+
+    if selected != tabs[st.session_state.selected_deepdive_tab]:
+        st.session_state.selected_deepdive_tab = tabs.index(selected)
+        st.rerun()
+
+    if st.session_state.selected_deepdive_tab == 0:
         if st.session_state.time_series_df is not None and not st.session_state.time_series_df.empty:
             st.subheader("Campaign Deep Dive")
 
@@ -485,7 +491,7 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
             st.warning(
                 "Campaign time-series analysis could not be performed. This may be due to a lack of a clear date column in the data or an error during code generation.")
 
-    with tab2:
+    elif st.session_state.selected_deepdive_tab == 1:
         if st.session_state.adgroup_time_series_df is not None and not st.session_state.adgroup_time_series_df.empty:
             st.subheader("Ad Group Deep Dive")
 
@@ -564,13 +570,13 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
             st.warning(
                 "Ad group time-series analysis could not be performed. This may be due to a lack of ad group data, a clear date column in the data, or an error during code generation.")
 
-    with tab3:
+    elif st.session_state.selected_deepdive_tab == 2:
         if st.session_state.creative_time_series_df is not None and not st.session_state.creative_time_series_df.empty:
             st.subheader("Creative Deep Dive")
 
             creative_list = st.session_state.creative_df.head(20)['Creative'].unique()
             selected_creative = st.selectbox("Select a Creative to Analyze:", creative_list,
-                                            key="creative_select")
+                                             key="creative_select")
 
             if selected_creative:
                 creative_time_data = st.session_state.creative_time_series_df[
