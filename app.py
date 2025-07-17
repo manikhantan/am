@@ -69,7 +69,7 @@ def get_llm_response(prompt, api_key):
                  "content": "You are a world-class data analysis assistant. You write clean, efficient, and modern Python pandas code. You also provide expert marketing analysis insights based on data."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.1
+            temperature=0.0
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -159,12 +159,13 @@ if uploaded_files:
                 **Instructions:**
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
-                3. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
-                4. The final output MUST be a pandas DataFrame named `final_df`.
-                5. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                6. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
-                7. Sort `final_df` by 'Spends' in descending order.
-                8. Provide ONLY the Python code, without any explanations or markdown.
+                3. Don't use other columns as proxies if the specific column is not available.
+                4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
+                5. The final output MUST be a pandas DataFrame named `final_df`.
+                6. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                8. Sort `final_df` by 'Spends' in descending order.
+                9. Provide ONLY the Python code, without any explanations or markdown.
                 """
                 summary_code = get_llm_response(summary_code_prompt, api_key)
                 if not summary_code:
@@ -194,12 +195,13 @@ if uploaded_files:
                     **Instructions:**
                     1. The input DataFrame is `df`. `{date_col}` is already a datetime object.
                     2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
-                    3. Group the data by Campaign and by time period ('{time_period}' for {period_name}).
-                    4. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. Use agg method to aggregate.
-                    5. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. Handle division by zero.
-                    6. The final output MUST be a pandas DataFrame named `time_series_df`.
-                    7. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. The 'Date' column should be the start of the period.
-                    8. Provide ONLY the Python code, without any explanations or markdown.
+                    3. Don't use other columns as proxies if the specific column is not available.
+                    4. Group the data by Campaign and by time period ('{time_period}' for {period_name}).
+                    5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. Use agg method to aggregate.
+                    6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. Handle division by zero.
+                    7. The final output MUST be a pandas DataFrame named `time_series_df`.
+                    8. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. The 'Date' column should be the start of the period.
+                    9. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     time_series_code = get_llm_response(time_series_code_prompt, api_key)
                     if not time_series_code:
@@ -237,8 +239,8 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
     st.header("📊 Campaign Performance Summary")
     st.dataframe(
         st.session_state.result_df.head(10).style.format({
-            'Spends': '${:,.2f}', 'Revenue': '${:,.2f}', 'ROAS': '{:.2f}x',
-            'CPC': '${:,.2f}', 'CTR': '{:.2f}%'
+            'Spends': '{:,.2f}', 'Revenue': '{:,.2f}', 'ROAS': '{:.2f}x',
+            'CPC': '{:,.2f}', 'CTR': '{:.2f}%'
         }),
         use_container_width=True,
         hide_index=True
@@ -304,8 +306,8 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.metric("Total Spend", f"${campaign_time_data['Spends'].sum():,.2f}")
-                    st.metric("Total Revenue", f"${campaign_time_data['Revenue'].sum():,.2f}")
+                    st.metric("Total Spend", f"{campaign_time_data['Spends'].sum():,.2f}")
+                    st.metric("Total Revenue", f"{campaign_time_data['Revenue'].sum():,.2f}")
                 with col2:
                     avg_roas = campaign_time_data['Revenue'].sum() / campaign_time_data['Spends'].sum() if \
                     campaign_time_data['Spends'].sum() > 0 else 0
