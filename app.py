@@ -76,7 +76,6 @@ This app will use an AI to understand the data, generate analysis code, and crea
 
 # API Key input
 api_key = st.secrets["api"]["key"]
-
 uploaded_files = st.file_uploader(
     "Upload your CSV or XLS files",
     type=['csv', 'xls', 'xlsx'],
