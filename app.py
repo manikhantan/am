@@ -612,7 +612,7 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
                                 if insights.endswith("```"):
                                     insights = insights[:-3]
                                 insights = insights.strip()
-                            st.session_state.creative_insights[selected_adgroup] = insights
+                            st.session_state.creative_insights[selected_creative] = insights
                             st.info("AI-Powered Creative Insights:")
                             st.write(insights)
 
@@ -620,8 +620,8 @@ if st.session_state.result_df is not None and not st.session_state.result_df.emp
 
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("Total Spend", f"{adgroup_time_data['Spends'].sum():,.2f}")
-                        st.metric("Total Revenue", f"{adgroup_time_data['Revenue'].sum():,.2f}")
+                        st.metric("Total Spend", f"{creative_time_data['Spends'].sum():,.2f}")
+                        st.metric("Total Revenue", f"{creative_time_data['Revenue'].sum():,.2f}")
                     with col2:
                         avg_roas = creative_time_data['Revenue'].sum() / creative_time_data['Spends'].sum() if \
                             creative_time_data['Spends'].sum() > 0 else 0
