@@ -66,10 +66,10 @@ def get_llm_response(prompt, api_key):
             model="gpt-4.1",
             messages=[
                 {"role": "system",
-                 "content": "You are a world-class data analysis assistant. You write clean, efficient, and modern Python pandas code. You also provide expert marketing analysis insights based on data."},
+                 "content": "You are a world-class data analysis assistant. You write clean, efficient, and modern Python pandas code. Most importantly, you're great at following instructions. You also provide expert marketing analysis insights based on data."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.0
+            temperature=0
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
