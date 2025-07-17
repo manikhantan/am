@@ -66,7 +66,7 @@ def get_llm_response(prompt, api_key):
             model="gpt-4.1",
             messages=[
                 {"role": "system",
-                 "content": "You are a world-class data analysis assistant. You write clean, idiomatic, and efficient Python code using modern pandas practices. You always validate assumptions, handle edge cases gracefully, and ensure code is production-ready. In addition to code, you provide expert-level marketing performance analysis, offering actionable insights grounded in data trends and business goals."},
+                 "content": "You are a world-class data analysis assistant. You write clean, efficient, and modern Python pandas code. You also provide expert marketing analysis insights based on data."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.0
