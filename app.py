@@ -174,12 +174,13 @@ if uploaded_files:
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
                 3. Don't use proxies if the specific column is not available. Use NAN or 0 if unavailable.
-                4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
-                5. The final output MUST be a pandas DataFrame named `final_df`.
-                6. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
-                8. Sort `final_df` by 'Spends' in descending order.
-                9. Provide ONLY the Python code, without any explanations or markdown.
+                4. The final output MUST be a pandas DataFrame named `final_df`.
+                5. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
+                6. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                7. When using groupby().agg(), only include columns that actually exist in the DataFrame. For missing columns, add them after aggregation with default values (0 or NaN).
+                8. Use proper pandas aggregation syntax: either dictionary format {{'new_col': ('source_col', 'function')}} or named aggregation with pd.NamedAgg().
+                9. Sort `final_df` by 'Spends' in descending order.
+                10. Provide ONLY the Python code, without any explanations or markdown.
                 """
                 summary_code = get_llm_response(summary_code_prompt, api_key)
                 if not summary_code:
@@ -197,12 +198,13 @@ if uploaded_files:
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
                 3. Don't use proxies if the specific column is not available. Use NAN or 0 if unavailable.
-                4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
-                5. The final output MUST be a pandas DataFrame named `adgroup_df`.
-                6. `adgroup_df` must be grouped by ad group and contain: ['Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
-                8. Sort `adgroup_df` by 'Spends' in descending order.
-                9. Provide ONLY the Python code, without any explanations or markdown.
+                4. The final output MUST be a pandas DataFrame named `adgroup_df`.
+                5. `adgroup_df` must be grouped by ad group and contain: ['Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
+                6. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                7. When using groupby().agg(), only include columns that actually exist in the DataFrame. For missing columns, add them after aggregation with default values (0 or NaN).
+                8. Use proper pandas aggregation syntax: either dictionary format {{'new_col': ('source_col', 'function')}} or named aggregation with pd.NamedAgg().
+                9. Sort `adgroup_df` by 'Spends' in descending order.
+                10. Provide ONLY the Python code, without any explanations or markdown.
                 """
                 adgroup_code = get_llm_response(adgroup_code_prompt, api_key)
                 if not adgroup_code:
@@ -220,14 +222,14 @@ if uploaded_files:
                 1. The input DataFrame is `df`. Date-like columns are already datetime objects.
                 2. Only use the columns provided in the info above, do not attempt to infer alternate names for metrics.
                 3. Don't use proxies if the specific column is not available. Use NAN or 0 if unavailable.
-                4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
-                5. The final output MUST be a pandas DataFrame named `creative_df`.
-                6. `creative_df` must be grouped by creative and contain: ['Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
-                8. Ensure all the columns you're using are valid, whether it's in base data or being inferred.
-                8. Sort `creative_df` by 'Spends' in descending order.
-                9. If no creative column is found, set creative_df = None.
-                10. Provide ONLY the Python code, without any explanations or markdown.
+                4. The final output MUST be a pandas DataFrame named `creative_df`.
+                5. `creative_df` must be grouped by creative and contain: ['Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
+                6. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                7. When using groupby().agg(), only include columns that actually exist in the DataFrame. For missing columns, add them after aggregation with default values (0 or NaN).
+                8. Use proper pandas aggregation syntax: either dictionary format {{'new_col': ('source_col', 'function')}} or named aggregation with pd.NamedAgg().
+                9. Sort `creative_df` by 'Spends' in descending order.
+                10. If no creative column is found, set creative_df = None.
+                11. Provide ONLY the Python code, without any explanations or markdown.
                 """
                 creative_code = get_llm_response(creative_code_prompt, api_key)
                 if not creative_code:
@@ -263,10 +265,11 @@ if uploaded_files:
                     4. Group the data by Campaign and by time period ('{time_period}' for {period_name}).
                     5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
                     6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
-                    7. Ensure all the columns you're using are valid, whether it's in base data or being inferred.
-                    8. The final output MUST be a pandas DataFrame named `time_series_df`.
-                    9. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
-                    10. Provide ONLY the Python code, without any explanations or markdown.
+                    7. When using groupby().agg(), only include columns that actually exist in the DataFrame. For missing columns, add them after aggregation with default values (0 or NaN).
+                    8. Use proper pandas aggregation syntax: either dictionary format {{'new_col': ('source_col', 'function')}} or named aggregation with pd.NamedAgg().
+                    9. The final output MUST be a pandas DataFrame named `time_series_df`.
+                    10. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
+                    11. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     time_series_code = get_llm_response(time_series_code_prompt, api_key)
                     if not time_series_code:
@@ -289,7 +292,8 @@ if uploaded_files:
                     4. Group the data by Ad Group, and by time period ('{time_period}' for {period_name}).
                     5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
                     6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
-                    8. Ensure all the columns you're using are valid, whether it's in base data or being inferred.
+                    7. When using groupby().agg(), only include columns that actually exist in the DataFrame. For missing columns, add them after aggregation with default values (0 or NaN).
+                    8. Use proper pandas aggregation syntax: either dictionary format {{'new_col': ('source_col', 'function')}} or named aggregation with pd.NamedAgg().
                     9. The final output MUST be a pandas DataFrame named `adgroup_time_series_df`.
                     10. must have columns like: 'Date', 'Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
                     11. Provide ONLY the Python code, without any explanations or markdown.
@@ -315,10 +319,12 @@ if uploaded_files:
                     4. Group the data by Creative and by time period ('{time_period}' for {period_name}).
                     5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
                     6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
-                    7. The final output MUST be a pandas DataFrame named `creative_time_series_df`.
-                    8. `creative_time_series_df` must have columns like: 'Date', 'Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
-                    9. If no creative column is found, set creative_time_series_df = None.
-                    10. Provide ONLY the Python code, without any explanations or markdown.
+                    7. When using groupby().agg(), only include columns that actually exist in the DataFrame. For missing columns, add them after aggregation with default values (0 or NaN).
+                    8. Use proper pandas aggregation syntax: either dictionary format {{'new_col': ('source_col', 'function')}} or named aggregation with pd.NamedAgg().
+                    9. The final output MUST be a pandas DataFrame named `creative_time_series_df`.
+                    10. `creative_time_series_df` must have columns like: 'Date', 'Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
+                    11. If no creative column is found, set creative_time_series_df = None.
+                    12. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     creative_time_series_code = get_llm_response(creative_time_series_code_prompt, api_key)
                     if not creative_time_series_code:
