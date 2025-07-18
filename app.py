@@ -177,7 +177,7 @@ if uploaded_files:
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `final_df`.
                 6. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0). If Clicks column doesn't exist, set values of Clicks to None/NaN. Use agg method to aggregate.
                 8. Sort `final_df` by 'Spends' in descending order.
                 9. Provide ONLY the Python code, without any explanations or markdown.
                 """
@@ -200,7 +200,7 @@ if uploaded_files:
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `adgroup_df`.
                 6. `adgroup_df` must be grouped by ad group and contain: ['Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0). If Clicks column doesn't exist, set values of Clicks to None/NaN. Use agg method to aggregate.
                 8. Sort `adgroup_df` by 'Spends' in descending order.
                 9. Provide ONLY the Python code, without any explanations or markdown.
                 """
@@ -223,7 +223,7 @@ if uploaded_files:
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `creative_df`.
                 6. `creative_df` must be grouped by creative and contain: ['Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0). If Clicks column doesn't exist, set values of Clicks to None/NaN. Use agg method to aggregate.
                 8. Sort `creative_df` by 'Spends' in descending order.
                 9. If no creative column is found, set creative_df = None.
                 10. Provide ONLY the Python code, without any explanations or markdown.
