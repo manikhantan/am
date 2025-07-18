@@ -177,7 +177,7 @@ if uploaded_files:
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `final_df`.
                 6. `final_df` must be grouped by campaign and contain: ['Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0). If Clicks column doesn't exist, set values of Clicks to None/NaN. Use agg method to aggregate.
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
                 8. Sort `final_df` by 'Spends' in descending order.
                 9. Provide ONLY the Python code, without any explanations or markdown.
                 """
@@ -200,7 +200,7 @@ if uploaded_files:
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `adgroup_df`.
                 6. `adgroup_df` must be grouped by ad group and contain: ['Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0). If Clicks column doesn't exist, set values of Clicks to None/NaN. Use agg method to aggregate.
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
                 8. Sort `adgroup_df` by 'Spends' in descending order.
                 9. Provide ONLY the Python code, without any explanations or markdown.
                 """
@@ -223,7 +223,8 @@ if uploaded_files:
                 4. Handle variations in column names for metrics (e.g., 'Cost' vs 'Amount Spent', 'Revenue' vs 'Conversion value').
                 5. The final output MUST be a pandas DataFrame named `creative_df`.
                 6. `creative_df` must be grouped by creative and contain: ['Creative', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'].
-                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0). If Clicks column doesn't exist, set values of Clicks to None/NaN. Use agg method to aggregate.
+                7. Calculate derived metrics: ROAS (Revenue/Spends), CPC (Spends/Clicks), CTR (Clicks/Impressions * 100). Handle division by zero gracefully (fill with 0).
+                8. Ensure all the columns you're using are valid, whether it's in base data or being inferred.
                 8. Sort `creative_df` by 'Spends' in descending order.
                 9. If no creative column is found, set creative_df = None.
                 10. Provide ONLY the Python code, without any explanations or markdown.
@@ -262,9 +263,10 @@ if uploaded_files:
                     4. Group the data by Campaign and by time period ('{time_period}' for {period_name}).
                     5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
                     6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
-                    7. The final output MUST be a pandas DataFrame named `time_series_df`.
-                    8. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
-                    9. Provide ONLY the Python code, without any explanations or markdown.
+                    7. Ensure all the columns you're using are valid, whether it's in base data or being inferred.
+                    8. The final output MUST be a pandas DataFrame named `time_series_df`.
+                    9. `time_series_df` must have columns like: 'Date', 'Campaign', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
+                    10. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     time_series_code = get_llm_response(time_series_code_prompt, api_key)
                     if not time_series_code:
@@ -287,9 +289,10 @@ if uploaded_files:
                     4. Group the data by Ad Group, and by time period ('{time_period}' for {period_name}).
                     5. For each group, calculate: Sum of Spends, Sum of Revenue, Sum of Impressions, Sum of Clicks. If Clicks column doesn't exist, set Clicks to None/NaN. Use agg method to aggregate.
                     6. From the aggregated values, calculate: ROAS, CPC, and CTR for each group. If Clicks is None/NaN, set CPC and CTR to None/NaN. Handle division by zero.
-                    7. The final output MUST be a pandas DataFrame named `adgroup_time_series_df`.
-                    8. must have columns like: 'Date', 'Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
-                    9. Provide ONLY the Python code, without any explanations or markdown.
+                    8. Ensure all the columns you're using are valid, whether it's in base data or being inferred.
+                    9. The final output MUST be a pandas DataFrame named `adgroup_time_series_df`.
+                    10. must have columns like: 'Date', 'Ad Group', 'Spends', 'Revenue', 'ROAS', 'Impressions', 'Clicks', 'CPC', 'CTR'. Set CPC and CTR to None/NaN if Clicks column doesn't exist.
+                    11. Provide ONLY the Python code, without any explanations or markdown.
                     """
                     adgroup_time_series_code = get_llm_response(adgroup_time_series_code_prompt, api_key)
                     if not adgroup_time_series_code:
